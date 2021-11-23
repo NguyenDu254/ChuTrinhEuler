@@ -1,0 +1,143 @@
+#include<stdio.h>
+#define MAX 20
+
+typedef struct GRAPH{
+	int n; // Đỉnh
+	int a[MAX][MAX]; // Ma trận kề
+}DoThi;
+
+typedef struct STACK {
+	int size;// Số lượng đỉnh tìm được trong chu trình/ đường đi Euler
+	int b[MAX];// Lưu lại thứ tự đường đi của các đỉnh trong chu trình / đường đi Euler
+}Stack;
+
+void init (Stack &s){
+	s.size=0;// Khởi tạo Stack có size bằng 0 
+}
+
+void DuLieuStack(Stack &s, int value){
+	if(s.size+1>=MAX){
+		return; // Để stack ko bị đầy
+	}
+	s.b[s.size]= value; // Đẩy giá trị value vào stack 
+	s.size++; // Tăng kích thước của Stack lên
+}
+// Tìm đỉnh bắt đầu cảu chu trình Euler
+int  TimDinhBatDau(DoThi g)
+{
+	int bac;
+	//int bacle=0;
+	// Kiểm tra bậc của đồ thị( Không có lẻ ) 
+	for(int i=0; i<g.n; i++){
+		bac=0; // Khôi phục bậc để tìm bậc đỉnh tiếp theo
+		for(int j=0; j<g.n; j++){
+			if(g.a[i][j] != 0 ){
+				bac++; // Cộng bậc của đỉnh i
+			}
+		}
+		if(bac%2 !=0)// Bậc lẻ
+			return -1;
+			//bacle++;
+	}
+	// Lấy đỉnh bất kì có bậc chẵn
+	for(int i=0; i<g.n; i++){
+		for(int j=0; j<g.n; j++){
+			if(g.a[i][j] !=0)
+				return i; // Trả về đỉnh bất kì có bậc chẵn
+		}
+	}
+	return -1;
+}
+
+void TimDuongDi(int i, DoThi &g, Stack &s){
+	for(int j=0; j<g.n; j++){
+			if(g.a[i][j] !=0){// Do vô hướng nên kiểm tra cạnh nối
+				g.a[i][j] = g.a[j][i]= 0; // Loại bỏ cạnh nối từ đỉnh i đến j ra khỏi đồ thị
+				TimDuongDi(j,g,s); // Gọi đệ quy để tìm đường đi tại đỉnh j
+			}
+	}
+	DuLieuStack(s,i); //Đẩy đỉnh i vào stack
+}
+
+int KiemTra(DoThi g){// Kiểm tra chu trình Euler
+	DoThi m=g; // Tạo bản copy để khi xoá thì ko ảnh hưởng đến đồ thị chính 
+	Stack s;// Khởi tạo stack
+	init(s); //Chạy hàm init (size Stack=0)
+	int DinhBatDau = TimDinhBatDau(m);// Tìm đỉnh bắt đầu cho đồ thị
+	
+	if(DinhBatDau==-1){
+		return 0;
+	}
+	TimDuongDi(DinhBatDau, m ,s); // Tìm đường đi cho đồ thị copy(m)
+	for(int i=0; i<m.n; i++){
+		for(int j=0; j<m.n; j++){
+			if(m.a[i][j] !=0){// Phát hiện đỉnh còn cạnh nối
+				return 0;// Không tồn tại chu trình Euler
+			}
+		}
+	}
+	if(s.b[0] != s.b[s.size-1]){
+		return 0; // Không tông tại chu trình Euler
+	}
+	//Xuất ra chu trình Euler
+	printf("Chu Trinh Euler la:");
+	for(int i= s.size-1 ; i>=0; i--){
+		printf("%2d",s.b[i]+1);
+	}
+	return -1;
+	
+}
+
+int DocFile(char DD[100], DoThi &g)
+{
+	FILE *f= fopen (DD,"rt");
+	if(f==NULL)
+	{
+		printf("mo file ko thanh cong");
+		return 0;
+	}
+	fscanf(f,"%d", &g.n);
+	for(int i =0; i<g.n; i++){
+		for(int j=0 ; j<g.n; j++)
+		{
+			fscanf(f,"%d",&g.a[i][j]);
+		}
+	}
+	fclose(f);
+	return 1;
+}
+
+void XuatMaTran (DoThi g)
+{
+	printf("Do Thi Co %d dinh\n",g.n);
+	
+	printf("\nMa Tran Ke:\n");
+	for (int i=0; i<g.n ; i++)
+	{
+		for(int j=0; j<g.n ; j++)
+		{
+			printf("%3d",g.a[i][j]);
+		}
+		printf("\n");
+	}
+	
+}
+int main ()
+{
+	DoThi g;
+
+	
+	if(DocFile ("D:/FileTest/test1.txt",g))
+	{
+		XuatMaTran(g);
+	}
+	else
+		printf("Khong hop le ");
+	if(KiemTra(g) ==0){
+		printf("Do Thi Khong Co Chu Trinh Euler");
+	}
+	
+	
+	
+	return 0;
+}
